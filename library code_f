@@ -1,0 +1,1078 @@
+ 
+Public Class Frm_Menu
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Register.Click
+        Frm_Create.Show()
+        If Frm_Create.Visible Then
+            Me.Hide()
+        End If
+    End Sub
+
+    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Login.Click
+        Frm_Login.Show()
+        If Frm_Login.Visible Then
+            Me.Hide()
+        End If
+    End Sub
+
+    Private Sub Button3_Click(sender As Object, e As EventArgs) Handles Exit_.Click
+        Me.Close()
+    End Sub
+    Private Sub Frm_Menu_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.CenterToScreen()
+    End Sub
+End Class
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Imports MySql.Data.MySqlClient
+Imports MySql.Data
+Public Class Frm_Login
+    Private conn As MySqlConnection
+    Private dapt As MySqlDataAdapter
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Return_.Click
+        Me.Hide()
+        UsernameBox.Clear()
+        PasswordBox.Clear()
+        Frm_Menu.Show()
+    End Sub
+
+    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Login.Click
+        'This sets the public string 'stringpass' to equal the username. 
+        Dim OBJ As New Frm_Student
+        OBJ.stringpass = UsernameBox.Text
+        Dim uname As String = ""
+        Dim pword As String
+        Dim pass As String
+        uname = UsernameBox.Text
+        pword = PasswordBox.Text
+        'the if statement stops the code from continueing if there is nothing in username or password
+        If uname = "" Or pword = "" Then
+            MsgBox("Please Fill in all the information")
+        Else
+            'this query gets the password from the table user for the username that was entered. This is done so that I can check the databases password that is entered.
+            Dim query As String = "SELECT Pword FROM tbl_user WHERE uname= '" & uname & "';"
+            Dim dbsource As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+            Dim conn = New MySqlConnection(dbsource)
+            Dim cmd As New MySqlCommand(query, conn)
+            conn.Open()
+
+            Try
+                pass = cmd.ExecuteScalar().ToString
+            Catch ex As Exception
+                MsgBox("Username does not exit")
+            End Try
+            If (pword = pass) Then
+                MsgBox("Login success")
+                If uname = "ADMIN" Then
+                    Frm_Admin.Show()
+                End If
+                If Frm_Admin.Visible Then
+                    conn.Close()
+                    conn.Dispose()
+                    UsernameBox.Clear()
+                    PasswordBox.Clear()
+                    Me.Close()
+                Else
+                    conn.Close()
+                    conn.Dispose()
+                    UsernameBox.Clear()
+                    PasswordBox.Clear()
+                    'I have to use obj.show instead of student.show as the obj.show allows everything that uses stringpass to work. For example in form student I use this query "SELECT F_name FROM tbl_user WHERE uname= '" & stringpass & "';" this allows the string pass to be used. If I just put student.show the variable stringpass would not pass its data through to the next form.
+                    OBJ.Show()
+                End If
+                If OBJ.Visible Then
+                    Me.Hide()
+                End If
+
+            Else
+                MsgBox("login Failed")
+                UsernameBox.Clear()
+                PasswordBox.Clear()
+            End If
+        End If
+
+
+    End Sub
+
+    Private Sub Frm_Login_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.CenterToScreen()
+    End Sub
+End Class
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+Imports MySql.Data.MySqlClient
+Imports MySql.Data
+Imports System.Text.RegularExpressions
+
+Public Class Frm_Create
+    Private Sub Frm_Create_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.CenterToScreen()
+        DateTimePicker1.Hide()
+    End Sub
+
+    Private Sub Frm_CreateClosed(sender As Object, e As FormClosedEventArgs) Handles Me.FormClosed
+        Frm_Menu.Show()
+    End Sub
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Return_.Click
+        UsernameBox.Clear()
+        PasswordBox.Clear()
+        ConPasswordBox.Clear()
+        FirstNameBox.Clear()
+        LastNameBox.Clear()
+        AddressBox.Clear()
+        PostcodeBox.Clear()
+        CityTownBox.Clear()
+        DoBBox.Clear()
+        EmailBox.Clear()
+        Me.Hide()
+        Frm_Menu.Show()
+    End Sub
+
+    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Create.Click
+        Dim Uname As String = ""
+        Dim Pword As String = ""
+        Dim F_Name As String = ""
+        Dim S_Name As String = ""
+        Dim DOB As String = ""
+        Dim address As String = ""
+        Dim CityTown As String = ""
+        Dim postcode As String = ""
+        Dim email As String = ""
+
+
+        Uname = UsernameBox.Text
+        Pword = PasswordBox.Text
+        F_Name = FirstNameBox.Text
+        S_Name = LastNameBox.Text
+        DOB = DoBBox.Text
+        address = AddressBox.Text
+        CityTown = CityTownBox.Text
+        postcode = PostcodeBox.Text
+        email = EmailBox.Text
+        'This is done to set the extremeties of the age that users can enter. 
+        Dim currentdate, yearsaway, yearsbefore As Date
+        Dim yearsawayS, yearsbeforeS As String
+        currentdate = DateTimePicker1.Value.ToString
+        'I have taken away 9 years from the current date as knowone can be in highschool that is 9 years old.
+        yearsaway = currentdate.AddYears(-9)
+        'My SQL databases do not accept dates to be inputted dd-mm-yyyy so I have to reverse the date and turn it into a string to allow it to be inserted into the database.
+        'A problem that I encounted was that the months have to be capatalised. mm means minutes therefore it has to be MM to mean months.
+        yearsawayS = yearsaway.ToString("yyyy-MM-dd")
+        'I have taken away 70 years as there is no one in the school who is older than 70 as they will be retired. 
+        yearsbefore = currentdate.AddYears(-70)
+        yearsbeforeS = yearsbefore.ToString("yyyy-MM-dd")
+
+        'This regular expression did not cause me any problems as it is the generic email regex that is in the textbook.
+        Dim remail As New Regex("^[_a-z0-9-]+(.[a-z0-9-]+)@[a-z0-9-]+(.[a-z0-9-]+)*(.[a-z]{2,4})$")
+        Dim mailmatch As Match = remail.Match(email)
+        'This regular expression for postcode caused me several problems as there are some postcode that have 2 numbers on the first part M60 1NW or they have a number followed by a letter W1A 1HQ. So I had to get the regex to fit all of the different variaties there are in the UK 
+        Dim rpostcode As New Regex("^ ?(([BEGLMNSWbeglmnsw][0-9][0-9]?)|(([A-PR-UWYZa-pr-uwyz][A-HK-Ya-hk-y][0-9][0-9]?)|(([ENWenw][0-9][A-HJKSTUWa-hjkstuw])|([ENWenw][A-HK-Ya-hk-y][0-9][ABEHMNPRVWXYabehmnprvwxy])))) ?[0-9][ABD-HJLNP-UW-Zabd-hjlnp-uw-z]{2}$")
+        Dim postmatch As Match = rpostcode.Match(postcode)
+        'This regex is done so that it allows a user to enter the date either like 2017/05/09 or 2017-05-09 or 2017 05 09. 
+        Dim Datebirth As New Regex("^\d{4}[\-\/\s]?((((0[13578])|(1[02]))[\-\/\s]?(([0-2][0-9])|(3[01])))|(((0[469])|(11))[\-\/\s]?(([0-2][0-9])|(30)))|(02[\-\/\s]?[0-2][0-9]))$")
+        Dim birthmatch As Match = Datebirth.Match(DOB)
+
+        'This if statement stops users from entering the invalid dates of births that I had setup before.
+        If DOB <= yearsbeforeS Or DOB >= yearsawayS Then
+            MsgBox("Enter a valid date of birth")
+            DoBBox.Clear()
+        Else
+
+
+
+            If mailmatch.Success And postmatch.Success And birthmatch.Success Then
+
+
+
+                If Uname = "" Or Pword = "" Or F_Name = "" Or ConPasswordBox.Text = "" Or S_Name = "" Or DOB = "" Or address = "" Or CityTown = "" Or postcode = "" Or email = "" Then
+                    MsgBox("Please fill In the information")
+
+                Else
+                    If Pword = ConPasswordBox.Text Then
+                        'this SQL query inserts all of the information that the user had put in the textboxes
+                        Try
+                            Dim query As String = "INSERT INTO tbl_user (F_Name, S_Name, DOB, postcode, address, CityTown, email, Uname, Pword) VALUES ('" & F_Name & "','" & S_Name & "','" & DOB & "','" & postcode & "','" & address & "','" & CityTown & "','" & email & "','" & Uname & "','" & Pword & "');"
+                            Dim dbsource As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                            Dim conn = New MySqlConnection(dbsource)
+                            Dim cmd As New MySqlCommand(query, conn)
+                            conn.Open()
+                            cmd.ExecuteNonQuery()
+                            conn.Close()
+                            conn.Dispose()
+                            MsgBox("create success")
+                            UsernameBox.Clear()
+                            PasswordBox.Clear()
+                            FirstNameBox.Clear()
+                            LastNameBox.Clear()
+                            DoBBox.Clear()
+                            AddressBox.Clear()
+                            CityTownBox.Clear()
+                            PostcodeBox.Clear()
+                            EmailBox.Clear()
+                            Me.Hide()
+                            Frm_Menu.Show()
+                            'This catch is here to show the user that something that they had entered into the textboxes has not worked going into the database and therefore it hasnt been inserted.
+                        Catch ex As Exception
+                            MsgBox("error")
+                        End Try
+
+                    Else MsgBox("Your passwords do not match, please try again")
+                        PasswordBox.Clear()
+                        ConPasswordBox.Clear()
+
+                    End If
+                End If
+            Else
+                If mailmatch.Success And postmatch.Success Then
+                    MsgBox("Please enter a valid date of birth")
+                    DoBBox.Clear()
+                ElseIf mailmatch.Success And birthmatch.Success Then
+                    MsgBox("Please enter a valid postcode")
+                    PostcodeBox.Clear()
+                ElseIf postmatch.Success And birthmatch.Success Then
+                    MsgBox("Please enter a valid email")
+                    EmailBox.Clear()
+                ElseIf postmatch.Success Then
+                    MsgBox("Please enter a valid email and date of birth")
+                    EmailBox.Clear()
+                    DoBBox.Clear()
+                ElseIf mailmatch.Success Then
+                    MsgBox("Please enter a valid postcode and date of birth")
+                    PostcodeBox.Clear()
+                    DoBBox.Clear()
+                ElseIf birthmatch.Success Then
+                    MsgBox("Please enter a valid postcode and email")
+                    PostcodeBox.Clear()
+                    EmailBox.Clear()
+                Else MsgBox("Please enter a valid postcode, date of birth and email")
+                    PostcodeBox.Clear()
+                    EmailBox.Clear()
+                    DoBBox.Clear()
+                End If
+            End If
+        End If
+    End Sub
+
+End Class
+
+
+Imports MySql.Data.MySqlClient
+Imports MySql.Data
+Public Class Frm_Student
+    Public Property stringpass As String
+    Private Sub Frm_Student_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.CenterToScreen()
+        Dim Fname As String
+        Dim lname As String
+        'these two queries below are done so that the form can welcome the user. This uses stringpass which was assigned username textbox in the login form, therefore it gets teh first name that matches the username.
+        Dim query As String = "SELECT F_name FROM tbl_user WHERE uname= '" & stringpass & "';"
+        Dim dbsource As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+        Dim conn = New MySqlConnection(dbsource)
+        Dim cmd As New MySqlCommand(query, conn)
+        conn.Open()
+        Fname = cmd.ExecuteScalar().ToString
+        conn.Close()
+        conn.Dispose()
+
+        query = "SELECT S_name FROM tbl_user WHERE uname= '" & stringpass & "';"
+        dbsource = "server=localhost;userid=root;password=Ruby1234;database=Library"
+        conn = New MySqlConnection(dbsource)
+        cmd = New MySqlCommand(query, conn)
+        conn.Open()
+        lname = cmd.ExecuteScalar().ToString
+        conn.Close()
+        conn.Dispose()
+
+        Firstname.Text = ("Hello " & Fname & " " & lname)
+
+        Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+        Dim myTable As New DataTable()
+        Dim myCmd As New MySqlCommand()
+        myCmd.Connection = myconn
+        'This query only shows data from table book and loans but due to the relationships in my table I had to use an innerjoin from book to copies and then to loans to get the information for loans.
+        myCmd.CommandText = "SELECT tbl_book.Title, tbl_loans.DateOut, tbl_loans.DateExpected, tbl_loans.Returned FROM tbl_user INNER JOIN tbl_loans ON tbl_user.UserID = tbl_loans.User_FK INNER JOIN tbl_copies ON tbl_loans.copy_FK = tbl_copies.Copy_ID INNER JOIN tbl_book ON tbl_copies.ISBN_FK = tbl_book.ISBN WHERE uname= '" & stringpass & "' ORDER BY tbl_loans.Returned ASC;"
+
+
+
+        Dim myAdapter As New MySqlDataAdapter(myCmd)
+
+        DataGridView1.DataSource = myTable
+
+        myAdapter.Fill(myTable)
+
+
+    End Sub
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles RentABook.Click
+        'I did not orignally know that you had to pass the variable through all of the forms to get to the one that you need it for. For example form browsing does not use the variable stringpass.
+        Dim OBJ As New Frm_Browsing
+        OBJ.stringpass1 = stringpass
+        Me.Hide()
+        OBJ.Show()
+    End Sub
+
+    Private Sub Button3_Click(sender As Object, e As EventArgs) Handles LogOut.Click
+        Me.Hide()
+        Frm_Menu.Show()
+    End Sub
+
+    Private Sub DateTimePicker1_ValueChanged(sender As Object, e As EventArgs) Handles DateTimePicker1.ValueChanged
+
+    End Sub
+End Class
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+Imports MySql.Data.MySqlClient
+Imports MySql.Data
+Public Class Frm_Browsing
+    Public Property stringpass1 As String
+    Private Sub Browsing_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.CenterToScreen()
+        Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+        Dim myTable As New DataTable()
+        Dim myCmd As New MySqlCommand()
+        myCmd.Connection = myconn
+        'This query shows the all of the books that are in the library and presents it in a data grid
+        myCmd.CommandText = "SELECT tbl_book.Title, tbl_book.Genre, tbl_authors.AuthorF_Name, tbl_authors.AuthorS_Name, tbl_publishers.Publisher_Name FROM tbl_authors INNER JOIN tbl_book ON tbl_authors.Author_ID = tbl_book.Author_FK INNER JOIN tbl_publishers ON tbl_book.Publisher_FK = tbl_publishers.Publisher_ID;"
+
+        Dim myAdapter As New MySqlDataAdapter(myCmd)
+        DataGridView1.DataSource = myTable
+        myAdapter.Fill(myTable)
+
+        Combo1.DropDownStyle = ComboBoxStyle.DropDownList
+        Combo1.Items.Add("Title ASC")
+        Combo1.Items.Add("Title DESC")
+        Combo1.Items.Add("Genre ASC")
+        Combo1.Items.Add("Genre DESC")
+        Combo1.Items.Add("Author Firstname ASC")
+        Combo1.Items.Add("Author Firstname DESC")
+        Combo1.Items.Add("Author Surname ASC")
+        Combo1.Items.Add("Author Surname DESC")
+        Combo1.Items.Add("Publisher Name ASC")
+        Combo1.Items.Add("Publisher Name DESC")
+    End Sub
+
+    Private Sub Combo1_SelectedIndexChanged(sender As Object, e As EventArgs) Handles Combo1.SelectedIndexChanged
+        'all of these queries are changed depending on what the user selects on the combo box.
+        'If I had more time I would like to have seen if there was a way that you could only do one query where it automatically changes the orderby
+        If Combo1.Text = "Title ASC" Then
+            Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+            Dim myTable As New DataTable()
+            Dim myCmd As New MySqlCommand()
+            myCmd.Connection = myconn
+            myCmd.CommandText = "SELECT tbl_book.Title, tbl_book.Genre, tbl_authors.AuthorF_Name, tbl_authors.AuthorS_Name, tbl_publishers.Publisher_Name FROM tbl_authors INNER JOIN tbl_book ON tbl_authors.Author_ID = tbl_book.Author_FK INNER JOIN tbl_publishers ON tbl_book.Publisher_FK = tbl_publishers.Publisher_ID ORDER BY Title ASC;"
+            Dim myAdapter As New MySqlDataAdapter(myCmd)
+            DataGridView1.DataSource = myTable
+            myAdapter.Fill(myTable)
+
+        ElseIf Combo1.Text = "Title DESC" Then
+            Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+            Dim myTable As New DataTable()
+            Dim myCmd As New MySqlCommand()
+            myCmd.Connection = myconn
+            myCmd.CommandText = "SELECT tbl_book.Title, tbl_book.Genre, tbl_authors.AuthorF_Name, tbl_authors.AuthorS_Name, tbl_publishers.Publisher_Name FROM tbl_authors INNER JOIN tbl_book ON tbl_authors.Author_ID = tbl_book.Author_FK INNER JOIN tbl_publishers ON tbl_book.Publisher_FK = tbl_publishers.Publisher_ID ORDER BY Title DESC;"
+
+            Dim myAdapter As New MySqlDataAdapter(myCmd)
+            DataGridView1.DataSource = myTable
+            myAdapter.Fill(myTable)
+
+        ElseIf Combo1.Text = "Genre ASC" Then
+            Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+            Dim myTable As New DataTable()
+            Dim myCmd As New MySqlCommand()
+            myCmd.Connection = myconn
+            myCmd.CommandText = "SELECT tbl_book.Title, tbl_book.Genre, tbl_authors.AuthorF_Name, tbl_authors.AuthorS_Name, tbl_publishers.Publisher_Name FROM tbl_authors INNER JOIN tbl_book ON tbl_authors.Author_ID = tbl_book.Author_FK INNER JOIN tbl_publishers ON tbl_book.Publisher_FK = tbl_publishers.Publisher_ID ORDER BY Genre ASC;"
+
+            Dim myAdapter As New MySqlDataAdapter(myCmd)
+            DataGridView1.DataSource = myTable
+            myAdapter.Fill(myTable)
+
+        ElseIf Combo1.Text = "Genre DESC" Then
+            Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+            Dim myTable As New DataTable()
+            Dim myCmd As New MySqlCommand()
+            myCmd.Connection = myconn
+            myCmd.CommandText = "SELECT tbl_book.Title, tbl_book.Genre, tbl_authors.AuthorF_Name, tbl_authors.AuthorS_Name, tbl_publishers.Publisher_Name FROM tbl_authors INNER JOIN tbl_book ON tbl_authors.Author_ID = tbl_book.Author_FK INNER JOIN tbl_publishers ON tbl_book.Publisher_FK = tbl_publishers.Publisher_ID ORDER BY Genre DESC;"
+
+            Dim myAdapter As New MySqlDataAdapter(myCmd)
+            DataGridView1.DataSource = myTable
+            myAdapter.Fill(myTable)
+
+        ElseIf Combo1.Text = "Author Firstname ASC" Then
+            Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+            Dim myTable As New DataTable()
+            Dim myCmd As New MySqlCommand()
+            myCmd.Connection = myconn
+            myCmd.CommandText = "SELECT tbl_book.Title, tbl_book.Genre, tbl_authors.AuthorF_Name, tbl_authors.AuthorS_Name, tbl_publishers.Publisher_Name FROM tbl_authors INNER JOIN tbl_book ON tbl_authors.Author_ID = tbl_book.Author_FK INNER JOIN tbl_publishers ON tbl_book.Publisher_FK = tbl_publishers.Publisher_ID ORDER BY AuthorF_Name ASC;"
+
+            Dim myAdapter As New MySqlDataAdapter(myCmd)
+            DataGridView1.DataSource = myTable
+            myAdapter.Fill(myTable)
+
+        ElseIf Combo1.Text = "Author Firstname DESC" Then
+            Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+            Dim myTable As New DataTable()
+            Dim myCmd As New MySqlCommand()
+            myCmd.Connection = myconn
+            myCmd.CommandText = "SELECT tbl_book.Title, tbl_book.Genre, tbl_authors.AuthorF_Name, tbl_authors.AuthorS_Name, tbl_publishers.Publisher_Name FROM tbl_authors INNER JOIN tbl_book ON tbl_authors.Author_ID = tbl_book.Author_FK INNER JOIN tbl_publishers ON tbl_book.Publisher_FK = tbl_publishers.Publisher_ID ORDER BY AuthorF_Name DESC;"
+
+            Dim myAdapter As New MySqlDataAdapter(myCmd)
+            DataGridView1.DataSource = myTable
+            myAdapter.Fill(myTable)
+
+        ElseIf Combo1.Text = "Author Surname ASC" Then
+            Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+            Dim myTable As New DataTable()
+            Dim myCmd As New MySqlCommand()
+            myCmd.Connection = myconn
+            myCmd.CommandText = "SELECT tbl_book.Title, tbl_book.Genre, tbl_authors.AuthorF_Name, tbl_authors.AuthorS_Name, tbl_publishers.Publisher_Name FROM tbl_authors INNER JOIN tbl_book ON tbl_authors.Author_ID = tbl_book.Author_FK INNER JOIN tbl_publishers ON tbl_book.Publisher_FK = tbl_publishers.Publisher_ID ORDER BY AuthorS_Name ASC;"
+
+            Dim myAdapter As New MySqlDataAdapter(myCmd)
+            DataGridView1.DataSource = myTable
+            myAdapter.Fill(myTable)
+        ElseIf Combo1.Text = "Author Surname DESC" Then
+            Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+            Dim myTable As New DataTable()
+            Dim myCmd As New MySqlCommand()
+            myCmd.Connection = myconn
+            myCmd.CommandText = "SELECT tbl_book.Title, tbl_book.Genre, tbl_authors.AuthorF_Name, tbl_authors.AuthorS_Name, tbl_publishers.Publisher_Name FROM tbl_authors INNER JOIN tbl_book ON tbl_authors.Author_ID = tbl_book.Author_FK INNER JOIN tbl_publishers ON tbl_book.Publisher_FK = tbl_publishers.Publisher_ID ORDER BY AuthorS_Name DESC;"
+
+            Dim myAdapter As New MySqlDataAdapter(myCmd)
+            DataGridView1.DataSource = myTable
+            myAdapter.Fill(myTable)
+
+        ElseIf Combo1.Text = "Publisher Name ASC" Then
+            Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+            Dim myTable As New DataTable()
+            Dim myCmd As New MySqlCommand()
+            myCmd.Connection = myconn
+            myCmd.CommandText = "SELECT tbl_book.Title, tbl_book.Genre, tbl_authors.AuthorF_Name, tbl_authors.AuthorS_Name, tbl_publishers.Publisher_Name FROM tbl_authors INNER JOIN tbl_book ON tbl_authors.Author_ID = tbl_book.Author_FK INNER JOIN tbl_publishers ON tbl_book.Publisher_FK = tbl_publishers.Publisher_ID ORDER BY Publisher_Name ASC;"
+
+            Dim myAdapter As New MySqlDataAdapter(myCmd)
+            DataGridView1.DataSource = myTable
+            myAdapter.Fill(myTable)
+
+        ElseIf Combo1.Text = "Publisher Name DESC" Then
+            Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+            Dim myTable As New DataTable()
+            Dim myCmd As New MySqlCommand()
+            myCmd.Connection = myconn
+            myCmd.CommandText = "SELECT tbl_book.Title, tbl_book.Genre, tbl_authors.AuthorF_Name, tbl_authors.AuthorS_Name, tbl_publishers.Publisher_Name FROM tbl_authors INNER JOIN tbl_book ON tbl_authors.Author_ID = tbl_book.Author_FK INNER JOIN tbl_publishers ON tbl_book.Publisher_FK = tbl_publishers.Publisher_ID ORDER BY Publisher_Name DESC;"
+
+            Dim myAdapter As New MySqlDataAdapter(myCmd)
+            DataGridView1.DataSource = myTable
+            myAdapter.Fill(myTable)
+        End If
+    End Sub
+
+    Private Sub LookForTitle_Click(sender As Object, e As EventArgs) Handles LookForTitle.Click
+        Dim query As String = "SELECT Title FROM tbl_book WHERE Title= '" & SearchforTitle.Text & "';"
+        Dim dbsource As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+        Dim conn = New MySqlConnection(dbsource)
+        Dim cmd As New MySqlCommand(query, conn)
+        conn.Open()
+        Using reader As MySqlDataReader = cmd.ExecuteReader()
+            If reader.HasRows Then
+                Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+                Dim myTable As New DataTable()
+                Dim myCmd As New MySqlCommand()
+                myCmd.Connection = myconn
+                'This searches the database looking for the title the user entered and shows that book on a data grid view
+                myCmd.CommandText = "SELECT tbl_book.Title, tbl_book.Genre, tbl_authors.AuthorF_Name, tbl_authors.AuthorS_Name, tbl_publishers.Publisher_Name FROM tbl_authors INNER JOIN tbl_book ON tbl_authors.Author_ID = tbl_book.Author_FK INNER JOIN tbl_publishers ON tbl_book.Publisher_FK = tbl_publishers.Publisher_ID WHERE Title= '" & SearchforTitle.Text & "';"
+
+                Dim myAdapter As New MySqlDataAdapter(myCmd)
+                DataGridView1.DataSource = myTable
+                myAdapter.Fill(myTable)
+                SearchforTitle.Clear()
+            ElseIf SearchforTitle.Text = "" Then
+                MsgBox("Please enter a title into the search box")
+            Else MsgBox("We are sorry but we currently do not have the book " & SearchforTitle.Text & " in the library")
+                SearchforTitle.Clear()
+            End If
+        End Using
+    End Sub
+
+    Private Sub UndoSearch_Click(sender As Object, e As EventArgs) Handles UndoSearch.Click
+        Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+        Dim myTable As New DataTable()
+        Dim myCmd As New MySqlCommand()
+        myCmd.Connection = myconn
+        'This means that it just undo's the filter that the user entered
+        myCmd.CommandText = "SELECT tbl_book.Title, tbl_book.Genre, tbl_authors.AuthorF_Name, tbl_authors.AuthorS_Name, tbl_publishers.Publisher_Name FROM tbl_authors INNER JOIN tbl_book ON tbl_authors.Author_ID = tbl_book.Author_FK INNER JOIN tbl_publishers ON tbl_book.Publisher_FK = tbl_publishers.Publisher_ID;"
+
+        Dim myAdapter As New MySqlDataAdapter(myCmd)
+        DataGridView1.DataSource = myTable
+        myAdapter.Fill(myTable)
+    End Sub
+
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
+        Dim OBJ As New Frm_Renting
+        OBJ.stringpass2 = stringpass1
+        OBJ.Show()
+
+    End Sub
+
+    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Student.Click
+        SearchforTitle.Clear()
+        Dim OBJ As New Frm_Student
+        OBJ.stringpass = stringpass1
+        Me.Hide()
+        OBJ.Show()
+    End Sub
+End Class
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Imports MySql.Data.MySqlClient
+Imports MySql.Data
+Public Class Frm_Renting
+    Public Property stringpass2 As String
+
+    Private Sub Frm_Renting_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        DateTimePicker1.Hide()
+
+    End Sub
+    Private Sub Rent_Click(sender As Object, e As EventArgs) Handles Rent.Click
+        Dim money As String
+        'This query is to see if the user is able to rent any more books.
+        Dim querya As String = "SELECT Money FROM tbl_User WHERE Uname= '" & stringpass2 & "';"
+        Dim dbsourcea As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+        Dim conna = New MySqlConnection(dbsourcea)
+        Dim cmda As New MySqlCommand(querya, conna)
+        conna.Open()
+        money = cmda.ExecuteScalar().ToString
+        If money = "0" Then
+            MsgBox("I am sorry you have already rented 3 books and therefore cannot rent anymore until you hand a book back.")
+            Me.Hide()
+            Frm_Browsing.Hide()
+            Dim OBJ As New Frm_Student
+            OBJ.stringpass = stringpass2
+            OBJ.Show()
+        Else
+            Dim currentDate As String
+            Dim currentdate1 As Date
+            Dim dateexpected1 As Date
+            Dim dateExpected As String
+            currentdate1 = DateTimePicker1.Value.ToString
+            'I have added 14 days (two weeks) to set the variable to be how long the students have left to hand their books back.
+            dateexpected1 = currentdate1.AddDays(14)
+            currentDate = DateTimePicker1.Value.ToString("yyyy-MM-dd")
+            dateExpected = dateexpected1.ToString("yyyy-MM-dd")
+            Dim ISBN, Copy_ID, UserID As String
+            Dim query As String = "SELECT ISBN FROM tbl_book WHERE Title= '" & Title.Text & "';"
+            Dim dbsource As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+            Dim conn = New MySqlConnection(dbsource)
+            Dim cmd As New MySqlCommand(query, conn)
+            conn.Open()
+            Using reader As MySqlDataReader = cmd.ExecuteReader()
+                'This is done to check if there was a match in the database, if there is then the title the student entered is in the library.
+                If reader.HasRows Then
+                    query = "SELECT ISBN FROM tbl_book WHERE Title= '" & Title.Text & "';"
+                    dbsource = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                    conn = New MySqlConnection(dbsource)
+                    cmd = New MySqlCommand(query, conn)
+                    conn.Open()
+                    ISBN = cmd.ExecuteScalar().ToString
+                    conn.Close()
+                    conn.Dispose()
+                    'If I had more time I would like to have made it so that copy number automatically increases and uses a itteration meaning that the database can handle there being more than 3 copies of the book and made the code more efficient 
+                    'Dim boolean as boolean = false
+                    'dim copynumber as integer = 1
+                    'while boolean = false
+                    'do 
+                    'query = "SELECT Copy_ID FROM tbl_copies WHERE '" & copynumber & "' AND ISBN_FK= '" & ISBN & "';"
+                    'dbsource = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                    'conn = New MySqlConnection(dbsource)
+                    'cmd = New MySqlCommand(query, conn)
+                    'conn.Open()
+                    'Using readera As MySqlDataReader = cmd.ExecuteReader()
+                    'If readera.HasRows Then
+                    'query = "SELECT Copy_ID FROM tbl_copies WHERE '" & copynumber & "' AND ISBN_FK= '" & ISBN & "';"
+                    'dbsource = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                    'conn = New MySqlConnection(dbsource)
+                    'cmd = New MySqlCommand(query, conn)
+                    'conn.Open()
+                    'Copy_ID = cmd.ExecuteScalar().ToString
+                    'conn.Close()
+                    'conn.Dispose()
+                    'Dim query1 As String = "SELECT Loan_ID FROM tbl_loans WHERE Returned = 'No' AND Copy_FK= '" & Copy_ID & "';"
+                    'Dim dbsource1 As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                    'Dim conn1 = New MySqlConnection(dbsource1)
+                    ' Dim cmd1 As New MySqlCommand(query1, conn1)
+                    'conn1.Open()
+                    'Using reader1 As MySqlDataReader = cmd1.ExecuteReader()
+                    'If reader1.HasRows Then
+                    'query = "SELECT UserID FROM tbl_User WHERE Uname= '" & stringpass2 & "';"
+                    'dbsource = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                    'conn = New MySqlConnection(dbsource)
+                    'cmd = New MySqlCommand(query, conn)
+                    'conn.Open()
+                    'UserID = cmd.ExecuteScalar().ToString
+                    'conn.Close()
+                    'conn.Dispose()
+                    'boolean = true
+                    'else
+                    'copynumber = copynumber + 1
+                    'else
+                    'MsgBox("We are sorry but the book is currently being rented out by someone else")
+                    'Title.Clear()
+                    'end if
+                    'end if
+                    'loop until boolean = true
+                    ''Insertloan(Copy_ID, UserID, dateExpected, currentDate, money)
+                    query = "SELECT Copy_ID FROM tbl_copies WHERE CopyNumber = '1' AND ISBN_FK= '" & ISBN & "';"
+                    dbsource = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                    conn = New MySqlConnection(dbsource)
+                    cmd = New MySqlCommand(query, conn)
+                    conn.Open()
+                    Copy_ID = cmd.ExecuteScalar().ToString
+                    conn.Close()
+                    conn.Dispose()
+
+                    'If I had more time I would like to have to make my code shorter make this into a seperate function and call it everytime I need it to make my code shorter and easier to read.
+                    Dim query1 As String = "SELECT Loan_ID FROM tbl_loans WHERE Returned = 'No' AND Copy_FK= '" & Copy_ID & "';"
+                    Dim dbsource1 As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                    Dim conn1 = New MySqlConnection(dbsource1)
+                    Dim cmd1 As New MySqlCommand(query1, conn1)
+                    conn1.Open()
+                    Using reader1 As MySqlDataReader = cmd1.ExecuteReader()
+                        'This reader checks that if the book has a loan. It does this with copy and whether it has not been returned. If there was a match in the database then it will check another copynumber of the book. If there wasnt a match it continues using that copynumber
+                        If reader1.HasRows Then
+                            Dim query2 As String = "SELECT Copy_ID FROM tbl_copies WHERE CopyNumber = '2' AND ISBN_FK= '" & ISBN & "';"
+                            Dim dbsource2 As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                            Dim conn2 = New MySqlConnection(dbsource2)
+                            Dim cmd2 As New MySqlCommand(query2, conn2)
+                            conn2.Open()
+                            Using reader2 As MySqlDataReader = cmd2.ExecuteReader()
+
+                                If reader2.HasRows Then
+                                    query = "SELECT Copy_ID FROM tbl_copies WHERE CopyNumber = '2' AND ISBN_FK= '" & ISBN & "';"
+                                    dbsource = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                                    conn = New MySqlConnection(dbsource)
+                                    cmd = New MySqlCommand(query, conn)
+                                    conn.Open()
+                                    Copy_ID = cmd.ExecuteScalar().ToString
+                                    conn.Close()
+                                    conn.Dispose()
+                                    Dim query3 As String = "SELECT Loan_ID FROM tbl_loans WHERE Returned = 'No' AND Copy_FK= '" & Copy_ID & "';"
+                                    Dim dbsource3 As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                                    Dim conn3 = New MySqlConnection(dbsource3)
+                                    Dim cmd3 As New MySqlCommand(query3, conn3)
+                                    conn3.Open()
+                                    Using reader3 As MySqlDataReader = cmd3.ExecuteReader()
+
+                                        If reader3.HasRows Then
+                                            Dim query4 As String = "SELECT Copy_ID FROM tbl_copies WHERE CopyNumber = '3' AND ISBN_FK= '" & ISBN & "';"
+                                            Dim dbsource4 As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                                            Dim conn4 = New MySqlConnection(dbsource4)
+                                            Dim cmd4 As New MySqlCommand(query4, conn4)
+                                            conn4.Open()
+                                            Using reader4 As MySqlDataReader = cmd4.ExecuteReader()
+                                                If reader2.HasRows Then
+                                                    query = "SELECT Copy_ID FROM tbl_copies WHERE CopyNumber = '3' AND ISBN_FK= '" & ISBN & "';"
+                                                    dbsource = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                                                    conn = New MySqlConnection(dbsource)
+                                                    cmd = New MySqlCommand(query, conn)
+                                                    conn.Open()
+                                                    Copy_ID = cmd.ExecuteScalar().ToString
+                                                    conn.Close()
+                                                    conn.Dispose()
+                                                    Dim query5 As String = "SELECT Loan_ID FROM tbl_loans WHERE Returned = 'No' AND Copy_FK= '" & Copy_ID & "';"
+                                                    Dim dbsource5 As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                                                    Dim conn5 = New MySqlConnection(dbsource5)
+                                                    Dim cmd5 As New MySqlCommand(query5, conn5)
+                                                    conn5.Open()
+                                                    Using reader5 As MySqlDataReader = cmd5.ExecuteReader()
+
+                                                        If reader5.HasRows Then
+                                                            MsgBox("We are sorry but the book is currently being rented out by someone else")
+                                                            Title.Clear()
+                                                        Else
+                                                            query = "SELECT UserID FROM tbl_User WHERE Uname= '" & stringpass2 & "';"
+                                                            dbsource = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                                                            conn = New MySqlConnection(dbsource)
+                                                            cmd = New MySqlCommand(query, conn)
+                                                            conn.Open()
+                                                            UserID = cmd.ExecuteScalar().ToString
+                                                            conn.Close()
+                                                            conn.Dispose()
+                                                            'this calls the loan function
+                                                            Insertloan(Copy_ID, UserID, dateExpected, currentDate, money)
+                                                        End If
+                                                    End Using
+                                                Else
+                                                    MsgBox("We are sorry but the book is currently being rented out by someone else")
+                                                    Title.Clear()
+                                                End If
+                                            End Using
+                                        Else
+                                            query = "SELECT UserID FROM tbl_User WHERE Uname= '" & stringpass2 & "';"
+                                            dbsource = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                                            conn = New MySqlConnection(dbsource)
+                                            cmd = New MySqlCommand(query, conn)
+                                            conn.Open()
+                                            UserID = cmd.ExecuteScalar().ToString
+                                            conn.Close()
+                                            conn.Dispose()
+                                            Insertloan(Copy_ID, UserID, dateExpected, currentDate, money)
+                                        End If
+                                    End Using
+                                Else
+                                    MsgBox("We are sorry but the book is currently being rented out by someone else")
+                                    Title.Clear()
+                                End If
+                            End Using
+                        Else
+                            query = "SELECT UserID FROM tbl_User WHERE Uname= '" & stringpass2 & "';"
+                            dbsource = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                            conn = New MySqlConnection(dbsource)
+                            cmd = New MySqlCommand(query, conn)
+                            conn.Open()
+                            UserID = cmd.ExecuteScalar().ToString
+                            conn.Close()
+                            conn.Dispose()
+                            Insertloan(Copy_ID, UserID, dateExpected, currentDate, money)
+                        End If
+                    End Using
+                Else
+                    MsgBox("Sorry the title you entered is not in the library, please try again")
+                    Title.Clear()
+                End If
+            End Using
+        End If
+    End Sub
+    'This function is used so that I dont have to put this code at the end of all of the if statements. Therefore makeing my code more efficient
+    'It passes the values of copy, user, date expected, current date and money from the sub
+    Function Insertloan(ByVal Copy_ID As String, ByVal UserID As String, ByVal DateExpected As String, ByVal currentdate As String, ByVal money As String)
+        Try
+            'This inserts the loan into the database
+            Dim query3 As String = "INSERT INTO tbl_loans (Copy_FK, User_FK, DateOut, DateExpected, Returned) VALUES ('" & Copy_ID & "','" & UserID & "','" & currentdate & "','" & DateExpected & "','No');"
+            Dim dbsource3 As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+            Dim conn3 = New MySqlConnection(dbsource3)
+            Dim cmd3 As New MySqlCommand(query3, conn3)
+            conn3.Open()
+            cmd3.ExecuteNonQuery()
+            conn3.Close()
+            conn3.Dispose()
+            MsgBox("You have successfully rented a book. Please hand the book into the librarian before two weeks time")
+        Catch ex As Exception
+            MsgBox("error")
+        End Try
+
+        money = money - 1
+        'I had to convert the variable money into a integer as in the database it is set as an integer and was breaking the code when I inputted it as a string.
+        Convert.ToInt32(money)
+
+        Try
+            'This query just updates the users money that they have
+            Dim queryb As String = "UPDATE tbl_user SET money = '" & money & "'WHERE uname= '" & stringpass2 & "';"
+            Dim dbsourceb As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+            Dim connb = New MySqlConnection(dbsourceb)
+            Dim cmdb As New MySqlCommand(queryb, connb)
+            connb.Open()
+            cmdb.ExecuteNonQuery()
+            connb.Close()
+            connb.Dispose()
+            If money = 1 Then
+                MsgBox("You can rent " & money & " more book")
+
+            Else
+                MsgBox("You can rent " & money & " more books")
+            End If
+        Catch ex As Exception
+            MsgBox("error")
+        End Try
+        Me.Hide()
+        Title.Clear()
+    End Function
+
+    Private Sub Student_Click(sender As Object, e As EventArgs) Handles Student.Click
+        Frm_Browsing.Hide()
+        Dim OBJ As New Frm_Student
+        OBJ.stringpass = stringpass2
+        OBJ.Show()
+        Me.Hide()
+    End Sub
+
+    Private Sub Browsing_Click(sender As Object, e As EventArgs) Handles Browsing.Click
+        Me.Hide()
+    End Sub
+End Class
+
+
+
+
+
+
+
+
+
+Imports MySql.Data.MySqlClient
+Imports MySql.Data
+Public Class Frm_Admin
+    Private Sub Admin_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.CenterToScreen()
+        Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+        Dim myTable As New DataTable()
+        Dim myCmd As New MySqlCommand()
+        myCmd.Connection = myconn
+        'This shows all of the users in the database in a data grid view
+        myCmd.CommandText = "SELECT * FROM tbl_user ORDER BY S_Name, F_Name ASC;"
+
+
+
+        Dim myAdapter As New MySqlDataAdapter(myCmd)
+
+        DataGridView1.DataSource = myTable
+
+        myAdapter.Fill(myTable)
+    End Sub
+
+    Private Sub UserSearch_Click(sender As Object, e As EventArgs) Handles UserSearch.Click
+        If SearchUser.Text = "" Then
+            msgbox("Please enter a user's first name to search")
+        End If
+        'what I should have done is try catch excecute as shown below in commented code
+        'try
+        Dim myconn As New MySqlConnection("server=localhost;userid=root;password=Ruby1234;database=Library")
+        Dim myTable As New DataTable()
+        Dim myCmd As New MySqlCommand()
+        myCmd.Connection = myconn
+        'This selects everything about the user that the user entered into the textbox
+        myCmd.CommandText = "SELECT * FROM tbl_user WHERE F_name= '" & SearchUser.Text & "';"
+        'Catch ex As Exception
+        'MsgBox("There is not an account with the first name you have entered")
+        'End try
+        Dim myAdapter As New MySqlDataAdapter(myCmd)
+
+        DataGridView1.DataSource = myTable
+
+        myAdapter.Fill(myTable)
+
+    End Sub
+    Private Sub InsertBook_Click(sender As Object, e As EventArgs) Handles InsertBook.Click
+        Dim AuthorID, PublisherID As String
+        If NOCopies.Text >= "4" Then
+            MsgBox("We are sorry but you are unable to enter more than 3 copies of a book")
+            NOCopies.Clear()
+        End If
+        Dim query1 As String = "SELECT Author_ID FROM tbl_authors WHERE AuthorF_name= '" & AuthorF_name.Text & "' AND AuthorS_Name= '" & AuthorS_Name.Text & "';"
+        Dim dbsource1 As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+        Dim conn1 = New MySqlConnection(dbsource1)
+        Dim cmd1 As New MySqlCommand(query1, conn1)
+        conn1.Open()
+
+        Dim query2 As String = "SELECT Publisher_ID FROM tbl_publishers WHERE Publisher_Name= '" & Publisher_Name.Text & "';"
+        Dim dbsource2 As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+        Dim conn2 = New MySqlConnection(dbsource2)
+        Dim cmd2 As New MySqlCommand(query2, conn2)
+        conn2.Open()
+        Using reader As MySqlDataReader = cmd1.ExecuteReader()
+
+            Using reader2 As MySqlDataReader = cmd2.ExecuteReader
+                'These check whether the publisher and author's first and second name are currently in the database. If they are then it saves the variable of the authors iD and publishers ID.
+                'If it does not it inserts the publishers and authors information and then it grabs the new ID's made and uses them instead.
+                If reader.HasRows And reader2.HasRows Then
+                    Dim query As String = "SELECT Author_ID FROM tbl_authors WHERE AuthorF_name= '" & AuthorF_name.Text & "' AND AuthorS_Name= '" & AuthorS_Name.Text & "';"
+                    Dim dbsource As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                    Dim conn = New MySqlConnection(dbsource)
+                    Dim cmd As New MySqlCommand(query, conn)
+                    conn.Open()
+                    AuthorID = cmd.ExecuteScalar().ToString
+                    Dim query3 As String = "SELECT Publisher_ID FROM tbl_publishers WHERE Publisher_Name= '" & Publisher_Name.Text & "';"
+                    Dim dbsource3 As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                    Dim conn3 = New MySqlConnection(dbsource3)
+                    Dim cmd3 As New MySqlCommand(query3, conn3)
+                    conn3.Open()
+                    PublisherID = cmd3.ExecuteScalar().ToString
+
+                    AddBook(AuthorID, PublisherID)
+
+                ElseIf reader.HasRows Then
+                    Try
+                        Dim query3 As String = "INSERT INTO tbl_publishers (Publisher_Name) VALUES ('" & Publisher_Name.Text & "');"
+                        Dim dbsource3 As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                        Dim conn3 = New MySqlConnection(dbsource3)
+                        Dim cmd3 As New MySqlCommand(query3, conn3)
+                        conn3.Open()
+                        cmd3.ExecuteNonQuery()
+                        conn3.Close()
+                        conn3.Dispose()
+                        MsgBox("create success")
+                    Catch ex As Exception
+                        MsgBox("error")
+                    End Try
+
+                    Dim query4 As String = "SELECT Publisher_ID FROM tbl_publishers WHERE Publisher_Name= '" & Publisher_Name.Text & "';"
+                    Dim dbsource4 As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                    Dim conn4 = New MySqlConnection(dbsource4)
+                    Dim cmd4 As New MySqlCommand(query4, conn4)
+                    conn4.Open()
+                    PublisherID = cmd4.ExecuteScalar().ToString
+
+                    Dim query As String = "SELECT Author_ID FROM tbl_authors WHERE AuthorF_name= '" & AuthorF_name.Text & "' AND AuthorS_Name= '" & AuthorS_Name.Text & "';"
+                    Dim dbsource As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                    Dim conn = New MySqlConnection(dbsource)
+                    Dim cmd As New MySqlCommand(query, conn)
+                    conn.Open()
+                    AuthorID = cmd.ExecuteScalar().ToString
+                    AddBook(AuthorID, PublisherID)
+
+                ElseIf reader2.HasRows Then
+                    Try
+                        Dim query4 As String = "INSERT INTO tbl_authors (AuthorF_Name, AuthorS_Name) VALUES ('" & AuthorF_name.Text & "','" & AuthorS_Name.Text & "');"
+                        Dim dbsource4 As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                        Dim conn4 = New MySqlConnection(dbsource4)
+                        Dim cmd4 As New MySqlCommand(query4, conn4)
+                        conn4.Open()
+                        cmd4.ExecuteNonQuery()
+                        conn4.Close()
+                        conn4.Dispose()
+                        MsgBox("create success")
+                    Catch ex As Exception
+                        MsgBox("error")
+                    End Try
+
+                    Dim query3 As String = "SELECT Author_ID FROM tbl_authors WHERE AuthorF_name= '" & AuthorF_name.Text & "' AND AuthorS_Name= '" & AuthorS_Name.Text & "';"
+                    Dim dbsource3 As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                    Dim conn3 = New MySqlConnection(dbsource3)
+                    Dim cmd3 As New MySqlCommand(query3, conn3)
+                    conn3.Open()
+                    AuthorID = cmd3.ExecuteScalar().ToString
+
+                    Dim query As String = "SELECT Publisher_ID FROM tbl_publishers WHERE Publisher_Name= '" & Publisher_Name.Text & "';"
+                    Dim dbsource As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                    Dim conn = New MySqlConnection(dbsource)
+                    Dim cmd As New MySqlCommand(query, conn)
+                    conn.Open()
+                    PublisherID = cmd.ExecuteScalar().ToString
+                    AddBook(AuthorID, PublisherID)
+                End If
+            End Using
+        End Using
+    End Sub
+    'This function is used so that I dont have to put this code at the end of all of the if statements. Therefore makeing my code more efficient
+    'It passes the values of the variables authorId and publisherID
+    Function AddBook(ByVal AuthorID As String, ByVal PublisherID As String)
+        Try
+            'This inserts the new book into table book using the text from the texboxes and the ID's that passed into the function
+            Dim query As String = "INSERT INTO tbl_book (ISBN, Title, DatePublished, Genre, Author_FK, Publisher_FK) VALUES ('" & ISBN.Text & "','" & Title.Text & "','" & DatePublished.Text & "','" & Genre.Text & "','" & AuthorID & "','" & PublisherID & "');"
+            Dim dbsource As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+            Dim conn = New MySqlConnection(dbsource)
+            Dim cmd As New MySqlCommand(query, conn)
+            conn.Open()
+            cmd.ExecuteNonQuery()
+            conn.Close()
+            conn.Dispose()
+            MsgBox("create success")
+        Catch ex As Exception
+            MsgBox("error")
+        End Try
+        Dim loopamount As Integer = 0
+        'This itteration loops as many times as the user inputted the number of copies there are. For example if there was 2 copies it would insert the information twice into the copies table
+        Do
+            Try
+                'As loopamount is set to 0 the loop amount when in the query has to be +1 
+                Dim query As String = "INSERT INTO tbl_copies (CopyNumber, ISBN_FK) VALUES ('" & loopamount + 1 & "','" & ISBN.Text & "');"
+                Dim dbsource As String = "server=localhost;userid=root;password=Ruby1234;database=Library"
+                Dim conn = New MySqlConnection(dbsource)
+                Dim cmd As New MySqlCommand(query, conn)
+                conn.Open()
+                cmd.ExecuteNonQuery()
+                conn.Close()
+                conn.Dispose()
+                MsgBox("create success")
+
+            Catch ex As Exception
+                MsgBox("error")
+            End Try
+            loopamount = loopamount + 1
+        Loop Until loopamount = NOCopies.Text
+        AuthorF_name.Clear()
+        AuthorS_Name.Clear()
+        Publisher_Name.Clear()
+        ISBN.Clear()
+        Title.Clear()
+        DatePublished.Clear()
+        Genre.Clear()
+        NOCopies.Clear()
+    End Function
+
+    Private Sub Logout_Click(sender As Object, e As EventArgs) Handles Logout.Click
+        SearchUser.Clear()
+        AuthorF_name.Clear()
+        AuthorS_Name.Clear()
+        Publisher_Name.Clear()
+        ISBN.Clear()
+        Title.Clear()
+        DatePublished.Clear()
+        Genre.Clear()
+        NOCopies.Clear()
+        Frm_Menu.Show()
+        Me.Hide()
+    End Sub
+End Class
